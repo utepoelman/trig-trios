@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nugget's Trig Trios</title>
+    <style>
+        :root {
+            /* Purple/Teal Theme for Trig */
+            --primary-color: #8e44ad; 
+            --secondary-color: #9b59b6;
+            --bg-color: #f3e5f5;
+            --card-back-bg: #e1bee7;
+            --text-color: #2d3436;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-color);
+        }
+
+        /* --- Layout --- */
+        header, #nugget-area, #start-screen, #game-controls, #cert-buttons-container {
+            box-sizing: border-box;
+        }
+
+        header { text-align: center; padding: 20px; }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 95%;
+            max-width: 1200px;
+            position: relative;
+            padding-bottom: 50px;
+        }
+
+        /* --- Nugget Area --- */
+        #nugget-area {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        #nugget-top-img {
+            width: 150px;
+            height: auto;
+            transition: transform 0.3s ease;
+        }
+        #nugget-top-img:hover { transform: scale(1.05) rotate(5deg); }
+
+        .speech-bubble {
+            background: white;
+            border-radius: 20px;
+            padding: 15px 25px;
+            margin-left: 20px;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            max-width: 400px;
+            font-size: 1.1em;
+            border: 2px solid var(--primary-color);
+        }
+        .speech-bubble:after {
+            content: ''; position: absolute; left: 0; top: 50%; width: 0; height: 0;
+            border: 15px solid transparent; border-right-color: var(--primary-color);
+            border-left: 0; margin-top: -15px; margin-left: -15px;
+        }
+
+        /* --- Start Screen --- */
+        #start-screen {
+            display: flex; flex-direction: column; align-items: center; gap: 15px;
+            background: white; padding: 30px; border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .btn {
+            background-color: var(--primary-color); color: white; border: none;
+            padding: 12px 25px; margin: 5px; border-radius: 8px; font-size: 1.1rem;
+            cursor: pointer; transition: background 0.2s; min-width: 200px;
+        }
+        .btn:hover { filter: brightness(90%); }
+        .btn.secondary { background-color: #95a5a6; color: white; }
+        .btn.outline { background: transparent; border: 2px solid var(--primary-color); color: var(--primary-color); }
+        .btn.outline:hover { background: #f3e5f5; }
+        
+        .btn-group-label { font-weight: bold; margin-top: 10px; display: block; font-size: 1.2rem; }
+        
+        /* UPDATED Toggle Switch Styles */
+        .toggle-container {
+            display: flex; 
+            justify-content: center; /* Centers the buttons */
+            gap: 15px; 
+            margin: 10px 0 20px 0;
+            width: 100%;
+            background: transparent; /* No bar background */
+            box-shadow: none;
+        }
+        
+        .toggle-btn {
+            padding: 10px 25px; 
+            border-radius: 8px; /* Matches game buttons */
+            cursor: pointer; 
+            font-weight: bold; 
+            user-select: none;
+            font-size: 1.1rem;
+            min-width: 120px;
+            text-align: center;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .toggle-btn:hover { background: #f3e5f5; }
+
+        .toggle-btn.active { 
+            background: var(--primary-color); 
+            color: white; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .hidden { display: none !important; }
+
+        /* --- In-Game Controls --- */
+        #game-controls {
+            display: flex; flex-direction: column; align-items: center;
+            margin-bottom: 20px; gap: 15px; width: 100%;
+        }
+        
+        #stats-bar {
+            background: var(--primary-color); color: white; padding: 10px 20px;
+            border-radius: 20px; font-weight: bold; font-size: 1.2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* --- Game Board --- */
+        #board {
+            display: grid; 
+            /* 6 columns x 4 rows = 24 cards */
+            grid-template-columns: repeat(6, 1fr); 
+            gap: 12px;
+            perspective: 1000px; margin-bottom: 40px;
+            max-width: 1000px;
+        }
+        @media (max-width: 900px) { #board { grid-template-columns: repeat(4, 1fr); } } 
+        @media (max-width: 600px) { #board { grid-template-columns: repeat(3, 1fr); } } 
+
+        .card {
+            background-color: transparent; width: 120px; height: 120px; 
+            cursor: pointer; position: relative; transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+        .card.flipped { transform: rotateY(180deg); }
+        .card.matched { visibility: hidden; opacity: 0; transition: visibility 0s 0.5s, opacity 0.5s linear; cursor: default; }
+
+        .card-face {
+            position: absolute; width: 100%; height: 100%;
+            -webkit-backface-visibility: hidden; backface-visibility: hidden;
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #ddd;
+        }
+        .card-front { background-color: white; transform: rotateY(180deg); color: #2d3436; overflow: hidden; padding: 5px; box-sizing: border-box; }
+        .open-mode .card-front { transform: rotateY(0deg); }
+        .open-mode .card-back { display: none; }
+        .card.selected .card-front { border: 4px solid var(--primary-color); background-color: #f3e5f5; }
+        .card-back { background-color: var(--secondary-color); transform: rotateY(0deg); }
+        .card-back img { width: 80%; height: auto; opacity: 0.9; }
+
+        /* Animation */
+        @keyframes shake { 0%, 100% { transform: translateX(0) rotateY(180deg); } 25% { transform: translateX(-10px) rotateY(180deg); } 75% { transform: translateX(10px) rotateY(180deg); } }
+        @keyframes shake-faceup { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        .card.shaking { animation: shake 0.5s; }
+        .card.shaking-faceup { animation: shake-faceup 0.5s; }
+
+        /* --- Maths Content Styling --- */
+        .math-text { 
+            font-family: 'Times New Roman', serif; 
+            font-size: 1.6rem; 
+            font-weight: bold; 
+            font-style: normal;
+            text-align: center;
+        }
+        
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 2px;
+        }
+        .numerator { border-bottom: 2px solid #2d3436; padding: 0 4px; display: block; width: 100%; text-align: center; }
+        .denominator { padding-top: 2px; display: block; width: 100%; text-align: center; }
+        .neg-sign { margin-right: 2px; }
+
+        /* --- Modal & Certificate --- */
+        #modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000;
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 15px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 400px; width: 90%;
+            border: 4px solid var(--primary-color);
+        }
+        .modal-input { padding: 10px; font-size: 1.2rem; width: 80%; margin: 20px 0; border: 2px solid #ccc; border-radius: 5px; }
+        
+        #certificate-view {
+            text-align: center; background: white; padding: 40px;
+            border: 10px double var(--primary-color); border-radius: 15px;
+            max-width: 700px; width: 100%; box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: auto;
+        }
+        .cert-title { font-family: 'Times New Roman', serif; font-size: 3rem; color: var(--primary-color); margin-bottom: 10px; }
+        .cert-body { font-size: 1.3rem; margin: 30px 0; line-height: 1.6; }
+        .cert-name-display {
+            font-family: 'Brush Script MT', cursive; font-size: 3rem; color: #2d3436;
+            border-bottom: 2px solid #2d3436; padding: 0 20px; display: inline-block; margin-bottom: 10px;
+        }
+        .cert-signature-area {
+            display: flex; align-items: center; justify-content: center; gap: 30px; margin-top: 40px;
+        }
+        .cert-nugget-stamp { width: 100px; height: auto; transform: rotate(-10deg); opacity: 0.9; }
+        .paw-print { color: var(--primary-color); font-size: 3rem; transform: rotate(-15deg); }
+        .cert-meta { font-size: 0.9rem; color: #636e72; margin-top: 30px; border-top: 1px solid #dfe6e9; padding-top: 10px; }
+
+        /* --- PRINT STYLES --- */
+        #print-layout { display: none; }
+
+        @media print {
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            html, body { margin: 0; padding: 0; width: 100%; background: white; }
+            header, #nugget-area, #start-screen, #game-controls, #board, #modal-overlay, #cert-buttons-container { display: none !important; }
+            #game-container { display: block; width: 100%; max-width: none; margin: 0; }
+            
+            #certificate-view:not(.hidden) {
+                display: block !important; position: absolute; left: 0; top: 0; width: 100%;
+                border: 5px solid var(--primary-color);
+            }
+
+            #print-layout.visible-print {
+                display: block !important; position: absolute; top: 0; left: 0; width: 100%;
+            }
+            .print-page {
+                display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(6, 1fr);
+                gap: 10px; width: 100%; height: 98vh; page-break-after: always; padding: 20px; box-sizing: border-box;
+            }
+            .print-card {
+                display: flex; align-items: center; justify-content: center;
+                height: 100%; width: 100%; border: 1px dashed #ccc;
+            }
+            .print-card .card-face {
+                position: relative; transform: none; box-shadow: none;
+                border: 2px solid #333; width: 90%; height: 90%;
+            }
+            .print-card .card-back { background-color: var(--secondary-color) !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="no-print">
+        <h1>Nugget's Trig Trios</h1>
+    </header>
+
+    <div id="game-container">
+        
+        <div id="nugget-area" class="no-print">
+            <img src="Nugget.png" alt="Nugget" id="nugget-top-img" onerror="this.src='https://api.dicebear.com/7.x/thumbs/svg?seed=Nugget&backgroundColor=9b59b6'">
+            <div class="speech-bubble" id="nugget-speech">
+                Hi! Match sin, cos, and the exact value!
+            </div>
+        </div>
+
+        <div id="start-screen" class="no-print">
+            
+            <div class="mode-selection">
+                <span class="btn-group-label">Step 1: Choose Angle Units</span>
+                <div class="toggle-container">
+                    <div id="tog-deg" class="toggle-btn active" onclick="setUnits('deg')">Degrees</div>
+                    <div id="tog-rad" class="toggle-btn" onclick="setUnits('rad')">Radians</div>
+                </div>
+
+                <span class="btn-group-label">Step 2: Choose Game Mode</span>
+                <button class="btn" onclick="startGame('open')">Mode 1: Mix & Match (Face Up)</button>
+                <button class="btn" onclick="startGame('memory')">Mode 2: Memory Game (Face Down)</button>
+                
+                <div style="height: 10px;"></div>
+                <button class="btn outline" onclick="printCardSet()">Teacher: Print Card Set</button>
+            </div>
+
+        </div>
+
+        <div id="game-controls" class="hidden no-print">
+            <div id="stats-bar" class="hidden">
+                <span id="stats-text">Attempts: 0</span>
+            </div>
+        </div>
+
+        <div id="board" class="hidden no-print"></div>
+
+        <div id="modal-overlay" class="hidden no-print">
+            <div class="modal-content">
+                <h2>Well Done!</h2>
+                <p>You matched all the trig values!</p>
+                <p>Please enter your name for the certificate:</p>
+                <input type="text" id="winner-name-input" class="modal-input" placeholder="Your Name" maxlength="20">
+                <br>
+                <button class="btn" onclick="claimCertificate()">Claim Certificate</button>
+            </div>
+        </div>
+
+        <div id="certificate-view" class="hidden">
+            <div class="cert-title">Certificate of Achievement</div>
+            <div class="cert-body">
+                This certifies that<br><br>
+                <div class="cert-name-display" id="final-cert-name">Student Name</div>
+                <br><br>
+                has mastered<br>
+                <strong>Nugget's Trig Trios</strong><br>
+                <span id="cert-details" style="font-size: 0.9em; font-style: italic;">(Exact Values)</span>
+            </div>
+            
+            <div class="cert-signature-area">
+                <img src="Nugget.png" alt="Nugget Stamp" class="cert-nugget-stamp">
+                <div>
+                    <div class="paw-print">🐾</div>
+                    <div style="font-family: cursive; margin-top: 5px;">Nugget Approved!</div>
+                </div>
+            </div>
+
+            <div class="cert-meta">
+                Date: <span id="cert-date"></span>
+            </div>
+        </div>
+
+        <div id="cert-buttons-container" class="hidden no-print" style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn" onclick="location.reload()">Play Again</button>
+            <button class="btn secondary" onclick="window.print()">Print Certificate</button>
+        </div>
+
+    </div>
+
+    <div id="print-layout"></div>
+
+<script>
+    // --- Global State ---
+    let gameState = {
+        mode: null,
+        units: 'deg', // or 'rad'
+        attempts: 0,
+        matchesFound: 0,
+        isProcessing: false,
+        totalSets: 8, // 8 trios = 24 cards
+        startTime: null,
+        endTime: null
+    };
+
+    let selectedCards = [];
+
+    // --- Math Data ---
+    const EXACT_VALUES = [
+        {   
+            id: '0', 
+            display: '0', 
+            sin: [0, 180], 
+            cos: [90, 270] 
+        },
+        {   
+            id: '1', 
+            display: '1', 
+            sin: [90], 
+            cos: [0, 360] 
+        },
+        {   
+            id: '-1', 
+            display: '&minus;1', 
+            sin: [270], 
+            cos: [180] 
+        },
+        {   
+            id: '0.5', 
+            display: { num: '1', den: '2', neg: false },
+            sin: [30, 150], 
+            cos: [60, 300] 
+        },
+        {   
+            id: '-0.5', 
+            display: { num: '1', den: '2', neg: true }, 
+            sin: [210, 330], 
+            cos: [120, 240] 
+        },
+        {   
+            id: 'root2', 
+            display: { num: '√2', den: '2', neg: false }, 
+            sin: [45, 135], 
+            cos: [45, 315] 
+        },
+        {   
+            id: '-root2', 
+            display: { num: '√2', den: '2', neg: true }, 
+            sin: [225, 315], 
+            cos: [135, 225] 
+        },
+        {   
+            id: 'root3', 
+            display: { num: '√3', den: '2', neg: false }, 
+            sin: [60, 120], 
+            cos: [30, 330] 
+        },
+        {   
+            id: '-root3', 
+            display: { num: '√3', den: '2', neg: true }, 
+            sin: [240, 300], 
+            cos: [150, 210] 
+        }
+    ];
+
+    // --- Setup Logic ---
+    function setUnits(u) {
+        gameState.units = u;
+        document.getElementById('tog-deg').classList.toggle('active', u==='deg');
+        document.getElementById('tog-rad').classList.toggle('active', u==='rad');
+    }
+
+    function formatAngle(deg) {
+        if (gameState.units === 'deg') return `${deg}°`;
+        
+        // Convert to Radians
+        if (deg === 0) return '0';
+        if (deg === 360) return '2π';
+        
+        // Simplify fraction deg/180
+        const gcd = (a, b) => b ? gcd(b, a % b) : a;
+        const div = gcd(deg, 180);
+        let num = deg / div;
+        let den = 180 / div;
+        
+        let nStr = (num === 1) ? 'π' : `${num}π`;
+        if (den === 1) return nStr;
+        
+        // Return HTML for fraction
+        return `<span class="fraction"><span class="numerator">${nStr}</span><span class="denominator">${den}</span></span>`;
+    }
+
+    function formatValue(valObj) {
+        if (typeof valObj === 'string') return valObj;
+        // Fraction object
+        let sign = valObj.neg ? '<span class="neg-sign">&minus;</span>' : ''; 
+        return `${sign}<span class="fraction"><span class="numerator">${valObj.num}</span><span class="denominator">${valObj.den}</span></span>`;
+    }
+
+    function generateDeckData() {
+        // Pick 8 random DISTINCT values from the 9 possibilities
+        let pool = [...EXACT_VALUES].sort(() => 0.5 - Math.random());
+        let selection = pool.slice(0, 8); // 8 sets = 24 cards
+
+        let deck = [];
+        
+        selection.forEach((item, index) => {
+            const setId = index + 1;
+            
+            // Pick one random angle for sin
+            const sAngle = item.sin[Math.floor(Math.random() * item.sin.length)];
+            // Pick one random angle for cos
+            const cAngle = item.cos[Math.floor(Math.random() * item.cos.length)];
+
+            // Card 1: Sin
+            deck.push({ 
+                id: setId, type: 'sin', 
+                html: `sin(${formatAngle(sAngle)})`,
+                valId: item.id 
+            });
+
+            // Card 2: Cos
+            deck.push({ 
+                id: setId, type: 'cos', 
+                html: `cos(${formatAngle(cAngle)})`,
+                valId: item.id 
+            });
+
+            // Card 3: Value
+            deck.push({ 
+                id: setId, type: 'val', 
+                html: formatValue(item.display),
+                valId: item.id 
+            });
+        });
+
+        return deck;
+    }
+
+    function startGame(mode) {
+        gameState.mode = mode;
+        gameState.attempts = 0;
+        gameState.matchesFound = 0;
+        selectedCards = [];
+        gameState.isProcessing = false;
+        gameState.startTime = new Date();
+
+        // UI
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('game-controls').classList.remove('hidden');
+        document.getElementById('board').classList.remove('hidden');
+
+        if (mode === 'memory') {
+            document.getElementById('stats-bar').classList.remove('hidden');
+            document.getElementById('nugget-speech').innerText = "Find the matching Trio!";
+        } else {
+            document.getElementById('board').classList.add('open-mode');
+            document.getElementById('nugget-speech').innerText = "Match Sin, Cos, and Value!";
+        }
+
+        // Generate
+        const deckData = generateDeckData().sort(() => 0.5 - Math.random());
+        gameState.totalSets = deckData.length / 3;
+
+        const board = document.getElementById('board');
+        board.innerHTML = '';
+        deckData.forEach(data => board.appendChild(createCard(data)));
+    }
+
+    function createCard(data) {
+        const card = document.createElement('div'); 
+        card.className = 'card'; 
+        card.dataset.valId = data.valId;
+
+        const front = document.createElement('div'); front.className = 'card-face card-front';
+        front.innerHTML = `<div class="math-text">${data.html}</div>`;
+        
+        const back = document.createElement('div'); back.className = 'card-face card-back';
+        back.innerHTML = `<img src="Nugget.png" onerror="this.src='https://api.dicebear.com/7.x/thumbs/svg?seed=Nugget&backgroundColor=9b59b6'">`;
+        
+        card.appendChild(front); 
+        card.appendChild(back);
+        
+        card.addEventListener('click', () => handleCardClick(card));
+        return card;
+    }
+
+    function handleCardClick(card) {
+        if (gameState.isProcessing || card.classList.contains('matched')) return;
+        
+        // Open Mode Logic
+        if (gameState.mode === 'open') {
+            if (card.classList.contains('selected')) {
+                card.classList.remove('selected');
+                selectedCards = selectedCards.filter(c => c !== card);
+            } else {
+                // Check if belongs to same set as currently selected
+                if (selectedCards.length > 0 && selectedCards[0].dataset.valId !== card.dataset.valId) {
+                    shakeAndReset(card);
+                    return;
+                }
+                card.classList.add('selected');
+                selectedCards.push(card);
+                if (selectedCards.length === 3) handleMatch();
+            }
+            return;
+        }
+
+        // Memory Mode Logic
+        if (card.classList.contains('flipped')) return;
+        card.classList.add('flipped');
+        selectedCards.push(card);
+
+        if (selectedCards.length === 3) {
+            gameState.isProcessing = true;
+            gameState.attempts++;
+            updateStats();
+
+            const [c1, c2, c3] = selectedCards;
+            if (c1.dataset.valId === c2.dataset.valId && c2.dataset.valId === c3.dataset.valId) {
+                setTimeout(handleMatch, 500);
+            } else {
+                setTimeout(() => {
+                    selectedCards.forEach(c => c.classList.add('shaking'));
+                    setTimeout(() => {
+                        selectedCards.forEach(c => c.classList.remove('flipped', 'shaking'));
+                        selectedCards = [];
+                        gameState.isProcessing = false;
+                        document.getElementById('nugget-speech').innerText = "Try again!";
+                    }, 600);
+                }, 1000);
+            }
+        }
+    }
+
+    function shakeAndReset(card) {
+        card.classList.add('selected', 'shaking-faceup');
+        gameState.isProcessing = true;
+        document.getElementById('nugget-speech').innerText = "Oops! Not a match.";
+        setTimeout(() => {
+            card.classList.remove('selected', 'shaking-faceup');
+            gameState.isProcessing = false;
+            document.getElementById('nugget-speech').innerText = "Try again!";
+        }, 600);
+    }
+
+    function updateStats() {
+        document.getElementById('stats-text').innerText = `Attempts: ${gameState.attempts}`;
+    }
+
+    function handleMatch() {
+        selectedCards.forEach(c => {
+            c.classList.remove('selected'); // for open mode
+            c.classList.add('matched');
+        });
+        
+        gameState.matchesFound++;
+        selectedCards = [];
+        gameState.isProcessing = false;
+        
+        const praises = ["Exact!", "Trig Master!", "Perfect!", "Nugget approves!"];
+        document.getElementById('nugget-speech').innerText = praises[Math.floor(Math.random()*praises.length)];
+
+        if (gameState.matchesFound === gameState.totalSets) {
+            gameState.endTime = new Date();
+            setTimeout(() => {
+                document.getElementById('modal-overlay').classList.remove('hidden');
+                document.getElementById('winner-name-input').focus();
+            }, 500);
+        }
+    }
+
+    function claimCertificate() {
+        const name = document.getElementById('winner-name-input').value.trim();
+        if (name === "") { alert("Enter a name!"); return; }
+
+        document.getElementById('final-cert-name').innerText = name;
+        
+        let details = (gameState.units === 'deg') ? "Degrees Mode" : "Radians Mode";
+        if (gameState.mode === 'open') {
+            const diff = Math.floor((gameState.endTime - gameState.startTime) / 1000);
+            const m = Math.floor(diff / 60);
+            const s = diff % 60;
+            details += `\nTime Taken: ${m}m ${s}s`;
+        } else {
+            details += `\nTotal Attempts: ${gameState.attempts}`;
+        }
+
+        document.getElementById('cert-details').innerText = details;
+        document.getElementById('cert-date').innerText = new Date().toLocaleDateString();
+
+        document.getElementById('modal-overlay').classList.add('hidden');
+        document.getElementById('game-controls').classList.add('hidden');
+        document.getElementById('board').classList.add('hidden');
+        document.getElementById('certificate-view').classList.remove('hidden');
+        document.getElementById('cert-buttons-container').classList.remove('hidden');
+        document.getElementById('nugget-speech').innerText = "Congratulations!";
+    }
+
+    // --- Teacher Printing ---
+    function printCardSet() {
+        const container = document.getElementById('print-layout');
+        container.innerHTML = '';
+        
+        // Force generate 8 sets (24 cards) for printing
+        const deckData = generateDeckData().sort(() => 0.5 - Math.random());
+        
+        const p1 = document.createElement('div'); p1.className = 'print-page';
+        const p2 = document.createElement('div'); p2.className = 'print-page';
+        
+        deckData.forEach(cardData => {
+            const wrapF = document.createElement('div'); wrapF.className = 'print-card';
+            const faceF = document.createElement('div'); faceF.className = 'card-face card-front';
+            faceF.innerHTML = `<div class="math-text">${cardData.html}</div>`;
+            wrapF.appendChild(faceF);
+            p1.appendChild(wrapF);
+
+            const wrapB = document.createElement('div'); wrapB.className = 'print-card';
+            const faceB = document.createElement('div'); faceB.className = 'card-face card-back';
+            faceB.innerHTML = `<img src="Nugget.png">`;
+            wrapB.appendChild(faceB);
+            p2.appendChild(wrapB);
+        });
+        
+        container.appendChild(p1);
+        container.appendChild(p2);
+        
+        container.classList.add('visible-print');
+        window.print();
+        setTimeout(() => container.classList.remove('visible-print'), 1000);
+    }
+
+</script>
+</body>
+</html>
